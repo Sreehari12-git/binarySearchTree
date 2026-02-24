@@ -1,0 +1,78 @@
+/* Remove default Vite spacing */
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+}
+
+.bt-content {
+  min-height: 100vh;
+  background-color: #e0e0e0;
+}
+
+.bst-heading {
+  background-color: #207225;
+  padding: 10px;
+}
+
+.bst-heading h1 {
+  color: #ffeb39;
+  margin: 0;
+  padding-left: 2px;
+  font-size: 32px ;
+}
+
+.input-field {
+  background-color: #c8e6c9;
+  padding: 15px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.display-message{
+  background-color: white;
+  padding: 10px;
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  color: black;
+}
+
+.tree,
+.tree ul {
+  padding-top: 16px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.tree li {
+  list-style-type: none;
+  text-align: center;
+  position: relative;
+  padding: 8px 8px 0px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.node-circle {
+  background-color: #2e7d32;
+  color: white;
+  padding: 12px 18px;
+  border-radius: 50%;
+  font-weight: bold;
+  min-width: 40px;
+}
+
+.tree li ul {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.empty {
+  width: 40px;
+  height: 40px;
+}
