@@ -15,6 +15,10 @@ class Node {
 const insertNode = (root, value) => {
   // If there is no node here, create a new node and return it
   if(!root) return new Node(value);
+  // ✅ If duplicate, do nothing
+  if (value === root.value) {
+    return root;
+  }
   if(value < root.value) {
     root.left = insertNode(root.left, value);
   } else {
@@ -77,22 +81,20 @@ const TreeView = ({ node }) => {
   if (!node) return null;
 
   return (
-    <ul className="tree">
-      <li>
-        <div className="node-circle">{node.value}</div>
+    <div className="tree-node">
+      <div className="node-circle">{node.value}</div>
 
-        {(node.left || node.right) && (
-          <ul>
-            <li>
-              {node.left ? <TreeView node={node.left} /> : <span className="empty"></span>}
-            </li>
-            <li>
-              {node.right ? <TreeView node={node.right} /> : <span className="empty"></span>}
-            </li>
-          </ul>
-        )}
-      </li>
-    </ul>
+      {(node.left || node.right) && (
+        <div className="children">
+          <div className="lchild">
+            <TreeView node={node.left} />
+          </div>
+          <div className="rchild">
+            <TreeView node={node.right} />
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 
@@ -148,6 +150,13 @@ export default function BinarySearchTreeApp() {
   const value = parseInt(input);
   //if not a number function stops immediately
   if (isNaN(value)) return;
+  // 🔥 Check duplicate before inserting
+  if (findNode(root, value)) {
+    setMessage("Duplicates are not allowed");
+    setInput("");
+    return;
+  }
+
   const newRoot = insertNode(root, value);
   //Update react state
   setRoot({ ...newRoot });

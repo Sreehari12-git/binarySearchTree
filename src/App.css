@@ -39,40 +39,83 @@ html, body, #root {
   color: black;
 }
 
-.tree,
-.tree ul {
-  padding-top: 16px;
-  position: relative;
-  display: flex;
-  justify-content: center;
-}
-
-.tree li {
-  list-style-type: none;
-  text-align: center;
-  position: relative;
-  padding: 8px 8px 0px 8px;
+/* Tree container */
+.tree-node {
   display: flex;
   flex-direction: column;
   align-items: center;
+  margin-top: 40px;
 }
 
+.children {
+  display: flex;
+  justify-content: center;
+  gap: 80px;        /* controls horizontal spacing */
+  margin-top: 60px; /* vertical spacing */
+  position: relative;
+}
+
+.lchild {
+  display: flex;
+  justify-content: center;
+  position: relative;
+}
+
+.rchild {
+  display: flex;
+  justify-content: center;
+  position: relative;
+}
+
+/* Node styling */
 .node-circle {
   background-color: #2e7d32;
   color: white;
-  padding: 12px 18px;
+  padding: 14px 20px;
   border-radius: 50%;
   font-weight: bold;
+  display: inline-block;
   min-width: 40px;
+  position: relative;
+  text-align: center;
 }
 
-.tree li ul {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
+/* LEFT CHILD */
+/* .left-child {
+  position: absolute;
+  top: 50px;
+  left: -130px;
 }
 
-.empty {
-  width: 40px;
-  height: 40px;
+/* RIGHT CHILD */
+/* .right-child {
+  position: absolute;
+  top: 50px;
+  right: -130px;
+} */ */
+
+
+/* .lchild::before {
+  content: "";
+  position: absolute;
+  top: -35px;
+  right: -70px;
+  width: 150px;
+  height: 2px;
+  background: #444;
+  transform: rotate(-35deg);
+  transform-origin: right center;
 }
+
+/* Diagonal line RIGHT */
+.rchild::before {
+  content: "";
+  position: absolute;
+  top: -35px;
+  left: -60px;
+  width: 150px;
+  height: 2px;
+  background: #444;
+  transform: rotate(35deg);
+  transform-origin: left center;
+} 
