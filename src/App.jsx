@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from "react";
+import React, {useState, useEffect, useRef} from "react";
 import "./App.css";
 
 class Node {
@@ -77,21 +77,92 @@ const inOrderTraversal = (root, result =[]) => {
 }
 
 //Displaying the node
-const TreeView = ({ node }) => {
+
+//makes node clickable
+const TreeView = ({ node, onSelect }) => {
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const drawLines = () => {
+      const svg = containerRef.current.querySelector("svg");
+      svg.innerHTML = "";
+
+      const nodes = containerRef.current.querySelectorAll(".node-circle");
+
+      nodes.forEach((nodeEl) => {
+        const parent = nodeEl.parentElement.parentElement.closest(".tree-node");
+        if (!parent) return;
+
+        const parentCircle = parent.querySelector(".node-circle");
+        if (!parentCircle) return;
+
+        const rect1 = parentCircle.getBoundingClientRect();
+        const rect2 = nodeEl.getBoundingClientRect();
+        const containerRect = containerRef.current.getBoundingClientRect();
+
+        const x1 = rect1.left + rect1.width / 2 - containerRect.left;
+        const y1 = rect1.bottom - containerRect.top;
+        const x2 = rect2.left + rect2.width / 2 - containerRect.left;
+        const y2 = rect2.top - containerRect.top;
+
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", x1);
+        line.setAttribute("y1", y1);
+        line.setAttribute("x2", x2);
+        line.setAttribute("y2", y2);
+        line.setAttribute("stroke", "#444");
+        line.setAttribute("stroke-width", "2");
+
+        svg.appendChild(line);
+      });
+    };
+
+    setTimeout(drawLines, 0);
+  });
+
+  if (!node) return null;
+
+  return (
+    <div ref={containerRef} style={{ position: "relative" }}>
+      <svg
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          pointerEvents: "none",
+          zIndex: 0
+        }}
+      />
+
+      <div style={{ position: "relative", zIndex: 1 }}>
+        <RenderNode node={node} onSelect={onSelect} />
+      </div>
+    </div>
+  );
+};
+
+
+
+const RenderNode = ({ node, onSelect }) => {
   if (!node) return null;
 
   return (
     <div className="tree-node">
-      <div className="node-circle">{node.value}</div>
-
+<div
+  className="node-circle"
+  onClick={() => onSelect(node.value)}
+  style={{ cursor: "pointer" }}
+>
+  {node.value}
+</div>
       {(node.left || node.right) && (
         <div className="children">
           <div className="lchild">
-            <TreeView node={node.left} />
-          </div>
+<RenderNode node={node.left} onSelect={onSelect} />          </div>
           <div className="rchild">
-            <TreeView node={node.right} />
-          </div>
+<RenderNode node={node.right} onSelect={onSelect} />          </div>
         </div>
       )}
     </div>
@@ -126,7 +197,15 @@ export default function BinarySearchTreeApp() {
   localStorage.removeItem("bst");
   setRoot(null);
 }, []);
-
+const handleSelect = (value) => {
+  setSelectedNodes(prev => {
+    if (prev.length === 2) return [value];
+    return [...prev, value];
+  });
+};
+//To store two clicked nodes and to display the calculated relationship
+const [selectedNodes, setSelectedNodes] = useState([]);
+const [relationMessage, setRelationMessage] = useState("");
   //Save to localstorage- Runs when root changes
   // useEffect(() => {
   //   if(root) {
@@ -138,6 +217,98 @@ export default function BinarySearchTreeApp() {
   //   }
   //   //Runs this effect every time when root changes
   // }, [root]);
+    useEffect(() => {
+  if (selectedNodes.length === 2) {
+    const [a, b] = selectedNodes;
+
+    const infoA = findNodeInfo(root, a);
+    const infoB = findNodeInfo(root, b);
+
+    if (!infoA || !infoB) return;
+
+    const gender = (num) => num % 2 === 0 ? "male" : "female";
+
+    const title = {
+      parent: (n) => gender(n) === "male" ? "father" : "mother",
+      grand: (n) => gender(n) === "male" ? "grandfather" : "grandmother",
+      greatGrand: (n) => gender(n) === "male" ? "great-grandfather" : "great-grandmother",
+      uncle: (n) => gender(n) === "male" ? "uncle" : "aunt",
+      sibling: (n) => gender(n) === "male" ? "brother" : "sister"
+    };
+
+    let relation = "No relation";
+
+    // 1️⃣ Direct Parent
+    if (infoA.parent && infoA.parent.value === b) {
+      relation = `${b} (${title.parent(b)}) -> ${a} (child)`;
+    }
+    //user can select nodes in any order so that is why we give this condition
+    else if (infoB.parent && infoB.parent.value === a) {
+      relation = `${a} (${title.parent(a)}) -> ${b} (child)`;
+    }
+
+    // 2️⃣ Ancestor Based on Level Difference
+    else if (infoA.ancestors.some(n => n.value === b)) {
+      //checks if one node appears in another ancestors list
+      const diff = infoA.level - infoB.level;
+      
+      if (diff === 2)
+        relation = `${b} (${title.grand(b)}) -> ${a} (grandchild)`;
+      else if (diff === 3)
+        relation = `${b} (${title.greatGrand(b)}) -> ${a} (great-grandchild)`;
+      else if (diff > 3)
+        relation = `${b} (ancestor ${diff-1} levels above) -> ${a}`;
+    }
+    else if (infoB.ancestors.some(n => n.value === a)) {
+      const diff = infoB.level - infoA.level;
+
+      if (diff === 2)
+        relation = `${a} (${title.grand(a)}) -> ${b} (grandchild)`;
+      else if (diff === 3)
+        relation = `${a} (${title.greatGrand(a)}) -> ${b} (great-grandchild)`;
+      else if (diff > 3)
+        relation = `${a} (ancestor ${diff-1} levels above) -> ${b}`;
+    }
+
+    // 3️⃣ Siblings
+    else if (
+      infoA.parent &&
+      infoB.parent &&
+      infoA.parent.value === infoB.parent.value
+    ) {
+      relation = `${a} (${title.sibling(a)}) <-> ${b} (${title.sibling(b)})`;
+    }
+    // 5️⃣ Cousins
+   else if (
+  infoA.parent &&
+  infoB.parent &&
+  infoA.parent.value !== infoB.parent.value &&
+  infoA.level === infoB.level
+) {
+  relation = `${a} and ${b} are cousins`;
+}// 4️⃣ Uncle / Aunt (Parent's sibling)
+// 4️⃣ Uncle / Aunt (Parent's sibling)
+else if (
+  infoB.parent &&
+  infoA.parent &&
+  infoA.parent &&
+  infoB.parent &&
+  infoA.parent.parent === infoB.parent.parent && // parents are siblings
+  infoA.parent.value !== infoB.parent.value &&
+  Math.abs(infoA.level - infoB.level) === 1
+) {
+  if (infoA.level < infoB.level) {
+    relation = `${a} (${gender(a) === "male" ? "uncle" : "aunt"}) -> 
+                ${b} (${gender(b) === "male" ? "nephew" : "niece"})`;
+  } else {
+    relation = `${b} (${gender(b) === "male" ? "uncle" : "aunt"}) -> 
+                ${a} (${gender(a) === "male" ? "nephew" : "niece"})`;
+  }
+}
+    setRelationMessage(relation);
+    setSelectedNodes([]);
+  }
+}, [selectedNodes]);
 
   //This function runs when the user clicks the Insert button.
     // It does 4 important things:
@@ -156,7 +327,6 @@ export default function BinarySearchTreeApp() {
     setInput("");
     return;
   }
-
   const newRoot = insertNode(root, value);
   //Update react state
   setRoot({ ...newRoot });
@@ -165,6 +335,7 @@ export default function BinarySearchTreeApp() {
   //Resets the input field
   setInput("");
   };
+
   //Delete the input value by clicking
   const handleDelete = () => {
     const value = parseInt(input);
@@ -176,7 +347,35 @@ export default function BinarySearchTreeApp() {
     setMessage(`Deleted ${value}`);
     setInput("");
   };
+  const findNodeInfo = (root, value, level = 0, parent = null, path = []) => {
+  if (!root) return null;
 
+  if (root.value === value) {
+    return {
+      level,
+      parent,
+      ancestors: [...path]
+    };
+  }
+
+  if (value < root.value) {
+    return findNodeInfo(
+      root.left,
+      value,
+      level + 1,
+      root,
+      [...path, root]
+    );
+  }
+
+  return findNodeInfo(
+    root.right,
+    value,
+    level + 1,
+    root,
+    [...path, root]
+  );
+};
   //Runs when find button is clicked
   const handleFind = () => {
     const value = parseInt(input);
@@ -229,8 +428,12 @@ export default function BinarySearchTreeApp() {
         )}
 
         <div style={{ display: "flex", justifyContent: "center" }}>
-          <TreeView node={root} />
-        </div>
+<TreeView node={root} onSelect={handleSelect} />        </div>
+{relationMessage && (
+  <div style={{ marginTop: "20px", fontWeight: "bold", color: "purple" }}>
+    Relationship: {relationMessage}
+  </div>
+)}
       </div>
     </div>
   );
